@@ -3,11 +3,13 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
     private MyListNode<T> head;
     private MyListNode<T> tail;
 
+    ///Returns number of elements in the List (in O(1))
     @Override
     public int size() {
         return this.size;
     }
 
+    ///Adds the element at the beginning of the list
     @Override
     public void addFirst(T elem) throws IllegalArgumentException {
         if (elem == null) {
@@ -23,6 +25,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         size++;
     }
 
+    ///Adds the element as end of list
     @Override
     public void addLast(T elem) throws IllegalArgumentException {
         if (elem == null) {
@@ -38,9 +41,12 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         size++;
     }
 
-
+    ///Adds the element to the list (sorted in asc order)
     @Override
     public void addSorted(T val) throws IllegalArgumentException {
+        // assumes list is already sorted ascending - otherwise insert position is undefined
+        // add sorted ASCENDING
+
         if (val == null) {
             throw new IllegalArgumentException("adding element failed, no data available");
         }
@@ -66,6 +72,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         size++;
     }
 
+    ///Sorts the list in ascending order
     @Override
     public void sortASC() {
         if (head == null) {
@@ -93,6 +100,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
 
     }
 
+    ///Sorts the list in descending order
     @Override
     public void sortDES() {
         if (head == null) {
@@ -118,6 +126,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         } while (swapped);
     }
 
+    ///Clears the list by removing all elements (in O(1))
     @Override
     public void clear() {
         this.head = null;
@@ -125,6 +134,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         size = 0;
     }
 
+    ///Returns and removes the first element from the list
     @Override
     public T removeFirst() {
         if (head == null) {
@@ -143,6 +153,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return elem;
     }
 
+    ///Returns and removes the last element from the list
     @Override
     public T removeLast() {
         if (head == null) {
@@ -167,6 +178,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return elem;
     }
 
+    ///Returns the first element from the list (no removal)
     @Override
     public T getFirst() {
         if (head == null) {
@@ -175,6 +187,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return head.getElement();
     }
 
+    ///Returns the last element from the list (no removal)
     @Override
     public T getLast() {
         if (tail == null) {
@@ -183,10 +196,11 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return tail.getElement();
     }
 
+    ///Returns true if T is in list; false otherwise
     @Override
     public boolean contains(T val) throws IllegalArgumentException {
         if (val == null) {
-            throw new IllegalArgumentException("element noch valid for search");
+            throw new IllegalArgumentException("element not valid for search");
         }
 
         MyListNode<T> curr = head;
@@ -199,10 +213,11 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return false;
     }
 
+    ///Returns element at specific index position (no removal)
     @Override
     public T get(int index) {
         if (index > size - 1 || index < 0) {
-            throw new IllegalArgumentException("index " + index + " out of bounds for size " + size);
+            return null;
         }
 
         if (index == 0) {
@@ -220,10 +235,11 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return curr.getElement();
     }
 
+    ///Returns and removes element at specific index position
     @Override
     public T remove(int index) {
         if (index > size - 1 || index < 0) {
-            throw new IllegalArgumentException("index " + index + " out of bounds for size " + size);
+            return null;
         }
 
         if (index == 0) {
@@ -244,6 +260,27 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
         return delete.getElement();
     }
 
+    ///Returns a string representation of the list
+    @Override
+    public String toString() {
+        if (head == null) {
+            return "[empty list]";
+        }
+
+        StringBuilder sb = new StringBuilder("[");
+
+        MyListNode<T> curr = head;
+        while (curr != null) {
+            sb.append(curr.getElement());
+            if (curr.getNext() != null) {
+                sb.append(", ");            // while last element not reached
+            }
+            curr = curr.getNext();
+        }
+        return sb.append("]").toString();
+    }
+
+    ///Returns the list as array
     @Override
     public Object[] toArray() {
         Object[] arr = new Object[size];
@@ -256,20 +293,5 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
             i++;
         }
         return arr;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("[");
-
-        MyListNode<T> curr = head;
-        while (curr != null) {
-            sb.append(curr.getElement());
-            if (curr.getNext() != null) {
-                sb.append(", ");            // while last element not reached
-            }
-            curr = curr.getNext();
-        }
-        return sb.append("]").toString();
     }
 }

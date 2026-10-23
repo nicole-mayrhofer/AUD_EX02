@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +13,7 @@ public class MyLinkedListTest {
         list = new MyLinkedList<>();
     }
 
-    // helper to fill list
+    // helper to fill list (keeps insertion order)
     private void fill(int... values) {
         for (int v : values) {
             list.addLast(v);
@@ -21,370 +22,627 @@ public class MyLinkedListTest {
 
     // ---------- empty list ----------
 
-    @Test
-    void newListIsEmpty() {
-        assertEquals(0, list.size());
-        assertEquals("[]", list.toString());
-        assertEquals(0, list.toArray().length);
+    @Nested
+    class EmptyList {
+
+        @Test
+        void sizeIsZero() {
+            assertEquals(0, list.size());
+        }
+
+        @Test
+        void toStringShowsEmptyList() {
+            assertEquals("[empty list]", list.toString());
+        }
+
+        @Test
+        void toArrayIsEmpty() {
+            assertEquals(0, list.toArray().length);
+        }
+
+        @Test
+        void getFirstAndGetLastReturnNull() {
+            assertNull(list.getFirst());
+            assertNull(list.getLast());
+        }
+
+        @Test
+        void removeFirstAndRemoveLastReturnNull() {
+            assertNull(list.removeFirst());
+            assertNull(list.removeLast());
+            assertEquals(0, list.size());
+        }
+
+        @Test
+        void getAndRemoveByIndexReturnNull() {
+            assertNull(list.get(0));
+            assertNull(list.remove(0));
+            assertEquals(0, list.size());
+        }
+
+        @Test
+        void containsReturnsFalse() {
+            assertFalse(list.contains(1));
+        }
+
+        @Test
+        void clearOnEmptyListDoesNothing() {
+            list.clear();
+            assertEquals(0, list.size());
+            assertEquals("[empty list]", list.toString());
+        }
     }
 
     // ---------- addFirst ----------
 
-    @Test
-    void addFirstOnEmptyList() {
-        list.addFirst(5);
-        assertEquals(1, list.size());
-        assertEquals(5, list.getFirst());
-        assertEquals(5, list.getLast());
-    }
+    @Nested
+    class AddFirst {
 
-    @Test
-    void addFirstAddsInFront() {
-        list.addFirst(3);
-        list.addFirst(2);
-        list.addFirst(1);
-        assertEquals("[1, 2, 3]", list.toString());
-        assertEquals(1, list.getFirst());
-        assertEquals(3, list.getLast());
-        assertEquals(3, list.size());
-    }
+        @Test
+        void onEmptyListSetsHeadAndTail() {
+            list.addFirst(5);
+            assertEquals(1, list.size());
+            assertEquals(5, list.getFirst());
+            assertEquals(5, list.getLast());
+        }
 
-    @Test
-    void addFirstNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.addFirst(null));
-        assertEquals(0, list.size());
+        @Test
+        void addsInFront() {
+            list.addFirst(3);
+            list.addFirst(2);
+            list.addFirst(1);
+            assertEquals("[1, 2, 3]", list.toString());
+            assertEquals(1, list.getFirst());
+            assertEquals(3, list.getLast());
+            assertEquals(3, list.size());
+        }
+
+        @Test
+        void nullThrowsAndListUnchanged() {
+            fill(1, 2);
+            IllegalArgumentException ex = assertThrows(
+                    IllegalArgumentException.class, () -> list.addFirst(null));
+            assertEquals("adding element failed, no data available", ex.getMessage());
+            assertEquals(2, list.size());
+            assertEquals("[1, 2]", list.toString());
+        }
     }
 
     // ---------- addLast ----------
 
-    @Test
-    void addLastOnEmptyList() {
-        list.addLast(5);
-        assertEquals(1, list.size());
-        assertEquals(5, list.getFirst());
-        assertEquals(5, list.getLast());
-    }
+    @Nested
+    class AddLast {
 
-    @Test
-    void addLastAddsAtEnd() {
-        fill(1, 2, 3);
-        assertEquals("[1, 2, 3]", list.toString());
-        assertEquals(1, list.getFirst());
-        assertEquals(3, list.getLast());
-        assertEquals(3, list.size());
-    }
+        @Test
+        void onEmptyListSetsHeadAndTail() {
+            list.addLast(5);
+            assertEquals(1, list.size());
+            assertEquals(5, list.getFirst());
+            assertEquals(5, list.getLast());
+        }
 
-    @Test
-    void addLastNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.addLast(null));
-        assertEquals(0, list.size());
-    }
+        @Test
+        void addsAtEnd() {
+            fill(1, 2, 3);
+            assertEquals("[1, 2, 3]", list.toString());
+            assertEquals(1, list.getFirst());
+            assertEquals(3, list.getLast());
+            assertEquals(3, list.size());
+        }
 
-    @Test
-    void mixedAddFirstAndAddLast() {
-        list.addLast(2);
-        list.addFirst(1);
-        list.addLast(3);
-        assertEquals("[1, 2, 3]", list.toString());
-        assertEquals(3, list.size());
+        @Test
+        void nullThrowsAndListUnchanged() {
+            fill(1, 2);
+            IllegalArgumentException ex = assertThrows(
+                    IllegalArgumentException.class, () -> list.addLast(null));
+            assertEquals("adding element failed, no data available", ex.getMessage());
+            assertEquals(2, list.size());
+            assertEquals("[1, 2]", list.toString());
+        }
+
+        @Test
+        void mixedWithAddFirst() {
+            list.addLast(2);
+            list.addFirst(1);
+            list.addLast(3);
+            assertEquals("[1, 2, 3]", list.toString());
+            assertEquals(3, list.size());
+        }
     }
 
     // ---------- addSorted ----------
 
-    @Test
-    void addSortedOnEmptyList() {
-        list.addSorted(5);
-        assertEquals("[5]", list.toString());
-        assertEquals(5, list.getLast());
+    @Nested
+    class AddSorted {
+
+        @Test
+        void onEmptyList() {
+            list.addSorted(5);
+            assertEquals("[5]", list.toString());
+            assertEquals(5, list.getFirst());
+            assertEquals(5, list.getLast());
+            assertEquals(1, list.size());
+        }
+
+        @Test
+        void insertsFrontMiddleEnd() {
+            list.addSorted(43);
+            list.addSorted(25);  // front
+            list.addSorted(60);  // end
+            list.addSorted(48);  // middle
+            assertEquals("[25, 43, 48, 60]", list.toString());
+            assertEquals(25, list.getFirst());
+            assertEquals(60, list.getLast());
+            assertEquals(4, list.size());
+        }
+
+        @Test
+        void insertsAtEveryMiddlePosition() {
+            fill(10, 20, 30, 40);
+            list.addSorted(15);
+            list.addSorted(25);
+            list.addSorted(35);
+            assertEquals("[10, 15, 20, 25, 30, 35, 40]", list.toString());
+            assertEquals(7, list.size());
+        }
+
+        @Test
+        void handlesDuplicates() {
+            list.addSorted(2);
+            list.addSorted(1);
+            list.addSorted(2);
+            list.addSorted(1);
+            assertEquals("[1, 1, 2, 2]", list.toString());
+            assertEquals(4, list.size());
+        }
+
+        @Test
+        void equalToHeadAndTail() {
+            fill(1, 5);
+            list.addSorted(1);
+            list.addSorted(5);
+            assertEquals("[1, 1, 5, 5]", list.toString());
+        }
+
+        @Test
+        void tailStaysCorrectAfterInsertAtEnd() {
+            list.addSorted(1);
+            list.addSorted(2);
+            list.addLast(3);
+            assertEquals(3, list.getLast());
+            assertEquals("[1, 2, 3]", list.toString());
+        }
+
+        @Test
+        void worksAfterSortASC() {
+            fill(30, 10, 20);
+            list.sortASC();
+            list.addSorted(15);
+            assertEquals("[10, 15, 20, 30]", list.toString());
+        }
+
+        @Test
+        void nullThrowsAndListUnchanged() {
+            fill(1, 2);
+            assertThrows(IllegalArgumentException.class, () -> list.addSorted(null));
+            assertEquals(2, list.size());
+        }
     }
 
-    @Test
-    void addSortedFrontMiddleEnd() {
-        list.addSorted(43);
-        list.addSorted(25);  // vorne
-        list.addSorted(60);  // hinten
-        list.addSorted(48);  // Mitte
-        assertEquals("[25, 43, 48, 60]", list.toString());
-        assertEquals(25, list.getFirst());
-        assertEquals(60, list.getLast());
-        assertEquals(4, list.size());
+    // ---------- sortASC ----------
+
+    @Nested
+    class SortASC {
+
+        @Test
+        void sortsList() {
+            fill(48, 25, 60, 43);
+            list.sortASC();
+            assertEquals("[25, 43, 48, 60]", list.toString());
+            assertEquals(25, list.getFirst());
+            assertEquals(60, list.getLast());
+            assertEquals(4, list.size());
+        }
+
+        @Test
+        void withDuplicates() {
+            fill(3, 1, 3, 2, 1);
+            list.sortASC();
+            assertEquals("[1, 1, 2, 3, 3]", list.toString());
+        }
+
+        @Test
+        void alreadySorted() {
+            fill(1, 2, 3);
+            list.sortASC();
+            assertEquals("[1, 2, 3]", list.toString());
+        }
+
+        @Test
+        void reverseSorted() {
+            fill(5, 4, 3, 2, 1);
+            list.sortASC();
+            assertEquals("[1, 2, 3, 4, 5]", list.toString());
+        }
+
+        @Test
+        void singleElement() {
+            fill(7);
+            list.sortASC();
+            assertEquals("[7]", list.toString());
+        }
+
+        @Test
+        void emptyListThrows() {
+            IllegalArgumentException ex = assertThrows(
+                    IllegalArgumentException.class, () -> list.sortASC());
+            assertEquals("empty list", ex.getMessage());
+        }
     }
 
-    @Test
-    void addSortedWithDuplicates() {
-        list.addSorted(2);
-        list.addSorted(1);
-        list.addSorted(2);
-        list.addSorted(1);
-        assertEquals("[1, 1, 2, 2]", list.toString());
-        assertEquals(4, list.size());
-    }
+    // ---------- sortDES ----------
 
-    @Test
-    void addSortedNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.addSorted(null));
-    }
+    @Nested
+    class SortDES {
 
-    // ---------- sortASC / sortDES ----------
+        @Test
+        void sortsList() {
+            fill(48, 25, 60, 43);
+            list.sortDES();
+            assertEquals("[60, 48, 43, 25]", list.toString());
+            assertEquals(60, list.getFirst());
+            assertEquals(25, list.getLast());
+            assertEquals(4, list.size());
+        }
 
-    @Test
-    void sortASCSortsList() {
-        fill(48, 25, 60, 43);
-        list.sortASC();
-        assertEquals("[25, 43, 48, 60]", list.toString());
-        assertEquals(25, list.getFirst());
-        assertEquals(60, list.getLast());
-    }
+        @Test
+        void withDuplicates() {
+            fill(3, 1, 3, 2, 1);
+            list.sortDES();
+            assertEquals("[3, 3, 2, 1, 1]", list.toString());
+        }
 
-    @Test
-    void sortASCWithDuplicates() {
-        fill(3, 1, 3, 2, 1);
-        list.sortASC();
-        assertEquals("[1, 1, 2, 3, 3]", list.toString());
-    }
+        @Test
+        void alreadySortedAscending() {
+            fill(1, 2, 3, 4, 5);
+            list.sortDES();
+            assertEquals("[5, 4, 3, 2, 1]", list.toString());
+        }
 
-    @Test
-    void sortASCSingleElement() {
-        fill(7);
-        list.sortASC();
-        assertEquals("[7]", list.toString());
-    }
+        @Test
+        void singleElement() {
+            fill(7);
+            list.sortDES();
+            assertEquals("[7]", list.toString());
+        }
 
-    @Test
-    void sortASCEmptyListThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.sortASC());
-    }
-
-    @Test
-    void sortDESSortsList() {
-        fill(48, 25, 60, 43);
-        list.sortDES();
-        assertEquals("[60, 48, 43, 25]", list.toString());
-        assertEquals(60, list.getFirst());
-        assertEquals(25, list.getLast());
-    }
-
-    @Test
-    void sortDESWithDuplicates() {
-        fill(3, 1, 3, 2, 1);
-        list.sortDES();
-        assertEquals("[3, 3, 2, 1, 1]", list.toString());
-    }
-
-    @Test
-    void sortDESEmptyListThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.sortDES());
+        @Test
+        void emptyListThrows() {
+            IllegalArgumentException ex = assertThrows(
+                    IllegalArgumentException.class, () -> list.sortDES());
+            assertEquals("empty list", ex.getMessage());
+        }
     }
 
     // ---------- clear ----------
 
-    @Test
-    void clearEmptiesList() {
-        fill(1, 2, 3);
-        list.clear();
-        assertEquals(0, list.size());
-        assertEquals("[]", list.toString());
-        // nach clear muss die Liste wieder normal benutzbar sein
-        list.addLast(4);
-        assertEquals("[4]", list.toString());
+    @Nested
+    class Clear {
+
+        @Test
+        void emptiesList() {
+            fill(1, 2, 3);
+            list.clear();
+            assertEquals(0, list.size());
+            assertEquals("[empty list]", list.toString());
+            assertNull(list.getFirst());
+            assertNull(list.getLast());
+        }
+
+        @Test
+        void listUsableAfterClear() {
+            fill(1, 2, 3);
+            list.clear();
+            list.addLast(4);
+            list.addFirst(3);
+            assertEquals("[3, 4]", list.toString());
+            assertEquals(3, list.getFirst());
+            assertEquals(4, list.getLast());
+            assertEquals(2, list.size());
+        }
     }
 
     // ---------- removeFirst ----------
 
-    @Test
-    void removeFirstReturnsAndRemoves() {
-        fill(1, 2, 3);
-        assertEquals(1, list.removeFirst());
-        assertEquals("[2, 3]", list.toString());
-        assertEquals(2, list.size());
-        assertEquals(2, list.getFirst());
-    }
+    @Nested
+    class RemoveFirst {
 
-    @Test
-    void removeFirstLastRemainingElement() {
-        fill(1);
-        assertEquals(1, list.removeFirst());
-        assertEquals(0, list.size());
-        // head und tail müssen zurückgesetzt sein
-        list.addLast(2);
-        assertEquals("[2]", list.toString());
-    }
+        @Test
+        void returnsAndRemoves() {
+            fill(1, 2, 3);
+            assertEquals(1, list.removeFirst());
+            assertEquals("[2, 3]", list.toString());
+            assertEquals(2, list.size());
+            assertEquals(2, list.getFirst());
+            assertEquals(3, list.getLast());
+        }
 
-    @Test
-    void removeFirstOnEmptyListReturnsNull() {
-        assertNull(list.removeFirst());
-        assertEquals(0, list.size());
+        @Test
+        void lastRemainingElement() {
+            fill(1);
+            assertEquals(1, list.removeFirst());
+            assertEquals(0, list.size());
+            assertNull(list.getFirst());
+            assertNull(list.getLast());
+            list.addLast(2);
+            assertEquals("[2]", list.toString());
+        }
+
+        @Test
+        void untilEmpty() {
+            fill(1, 2, 3);
+            assertEquals(1, list.removeFirst());
+            assertEquals(2, list.removeFirst());
+            assertEquals(3, list.removeFirst());
+            assertNull(list.removeFirst());
+            assertEquals(0, list.size());
+        }
     }
 
     // ---------- removeLast ----------
 
-    @Test
-    void removeLastReturnsAndRemoves() {
-        fill(1, 2, 3);
-        assertEquals(3, list.removeLast());
-        assertEquals("[1, 2]", list.toString());
-        assertEquals(2, list.size());
-        assertEquals(2, list.getLast());
-    }
+    @Nested
+    class RemoveLast {
 
-    @Test
-    void removeLastUpdatesTail() {
-        fill(1, 2, 3);
-        list.removeLast();
-        list.addLast(4);   // muss an den neuen tail (2) angehängt werden
-        assertEquals("[1, 2, 4]", list.toString());
-    }
+        @Test
+        void returnsAndRemoves() {
+            fill(1, 2, 3);
+            assertEquals(3, list.removeLast());
+            assertEquals("[1, 2]", list.toString());
+            assertEquals(2, list.size());
+            assertEquals(2, list.getLast());
+        }
 
-    @Test
-    void removeLastLastRemainingElement() {
-        fill(1);
-        assertEquals(1, list.removeLast());
-        assertEquals(0, list.size());
-        list.addFirst(2);
-        assertEquals("[2]", list.toString());
-        assertEquals(2, list.getLast());
-    }
+        @Test
+        void updatesTail() {
+            fill(1, 2, 3);
+            list.removeLast();
+            list.addLast(4);
+            assertEquals("[1, 2, 4]", list.toString());
+            assertEquals(4, list.getLast());
+        }
 
-    @Test
-    void removeLastOnEmptyListReturnsNull() {
-        assertNull(list.removeLast());
-        assertEquals(0, list.size());
+        @Test
+        void lastRemainingElement() {
+            fill(1);
+            assertEquals(1, list.removeLast());
+            assertEquals(0, list.size());
+            list.addFirst(2);
+            assertEquals("[2]", list.toString());
+            assertEquals(2, list.getLast());
+        }
+
+        @Test
+        void untilEmpty() {
+            fill(1, 2, 3);
+            assertEquals(3, list.removeLast());
+            assertEquals(2, list.removeLast());
+            assertEquals(1, list.removeLast());
+            assertNull(list.removeLast());
+            assertEquals(0, list.size());
+        }
     }
 
     // ---------- getFirst / getLast ----------
 
-    @Test
-    void getFirstAndGetLastDoNotRemove() {
-        fill(1, 2, 3);
-        assertEquals(1, list.getFirst());
-        assertEquals(3, list.getLast());
-        assertEquals(3, list.size());
-    }
+    @Nested
+    class GetFirstGetLast {
 
-    @Test
-    void getFirstOnEmptyListReturnsNull() {
-        assertNull(list.getFirst());
-        assertEquals(0, list.size());
-    }
+        @Test
+        void doNotRemove() {
+            fill(1, 2, 3);
+            assertEquals(1, list.getFirst());
+            assertEquals(3, list.getLast());
+            assertEquals(3, list.size());
+            assertEquals("[1, 2, 3]", list.toString());
+        }
 
-    @Test
-    void getLastOnEmptyListReturnsNull() {
-        assertNull(list.getLast());
-        assertEquals(0, list.size());
+        @Test
+        void singleElementIsFirstAndLast() {
+            fill(9);
+            assertEquals(9, list.getFirst());
+            assertEquals(9, list.getLast());
+        }
     }
 
     // ---------- contains ----------
 
-    @Test
-    void containsFindsElements() {
-        fill(1, 2, 3);
-        assertTrue(list.contains(1));
-        assertTrue(list.contains(2));
-        assertTrue(list.contains(3));
+    @Nested
+    class Contains {
+
+        @Test
+        void findsAllElements() {
+            fill(1, 2, 3);
+            assertTrue(list.contains(1));
+            assertTrue(list.contains(2));
+            assertTrue(list.contains(3));
+        }
+
+        @Test
+        void returnsFalseIfMissing() {
+            fill(1, 2, 3);
+            assertFalse(list.contains(4));
+        }
+
+        @Test
+        void returnsFalseAfterRemoval() {
+            fill(1, 2, 3);
+            list.remove(1);
+            assertFalse(list.contains(2));
+        }
+
+        @Test
+        void nullThrows() {
+            IllegalArgumentException ex = assertThrows(
+                    IllegalArgumentException.class, () -> list.contains(null));
+            assertEquals("element not valid for search", ex.getMessage());
+        }
     }
 
-    @Test
-    void containsReturnsFalseIfMissing() {
-        fill(1, 2, 3);
-        assertFalse(list.contains(4));
-    }
+    // ---------- get(index) ----------
 
-    @Test
-    void containsOnEmptyList() {
-        assertFalse(list.contains(1));
-    }
+    @Nested
+    class GetByIndex {
 
-    @Test
-    void containsNullThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.contains(null));
-    }
+        @Test
+        void returnsCorrectElements() {
+            fill(10, 20, 30, 40);
+            assertEquals(10, list.get(0));
+            assertEquals(20, list.get(1));
+            assertEquals(30, list.get(2));
+            assertEquals(40, list.get(3));
+            assertEquals(4, list.size());
+        }
 
-    // ---------- get ----------
+        @Test
+        void invalidIndexReturnsNull() {
+            fill(1, 2, 3);
+            assertNull(list.get(-1));
+            assertNull(list.get(3));
+            assertNull(list.get(100));
+            assertEquals(3, list.size());
+        }
 
-    @Test
-    void getReturnsCorrectElements() {
-        fill(10, 20, 30, 40);
-        assertEquals(10, list.get(0));
-        assertEquals(20, list.get(1));
-        assertEquals(30, list.get(2));
-        assertEquals(40, list.get(3));
-        assertEquals(4, list.size()); // nichts entfernt
-    }
-
-    @Test
-    void getInvalidIndexThrows() {
-        fill(1, 2, 3);
-        assertThrows(IllegalArgumentException.class, () -> list.get(-1));
-        assertThrows(IllegalArgumentException.class, () -> list.get(3));
-    }
-
-    @Test
-    void getOnEmptyListThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.get(0));
+        @Test
+        void singleElement() {
+            fill(7);
+            assertEquals(7, list.get(0));
+            assertNull(list.get(1));
+        }
     }
 
     // ---------- remove(index) ----------
 
-    @Test
-    void removeMiddle() {
-        fill(1, 2, 3, 4);
-        assertEquals(3, list.remove(2));
-        assertEquals("[1, 2, 4]", list.toString());
-        assertEquals(3, list.size());
-    }
+    @Nested
+    class RemoveByIndex {
 
-    @Test
-    void removeFirstIndex() {
-        fill(1, 2, 3);
-        assertEquals(1, list.remove(0));
-        assertEquals("[2, 3]", list.toString());
-    }
+        @Test
+        void removesMiddle() {
+            fill(1, 2, 3, 4);
+            assertEquals(3, list.remove(2));
+            assertEquals("[1, 2, 4]", list.toString());
+            assertEquals(3, list.size());
+        }
 
-    @Test
-    void removeLastIndexUpdatesTail() {
-        fill(1, 2, 3);
-        assertEquals(3, list.remove(2));
-        assertEquals(2, list.getLast());
-        list.addLast(5);
-        assertEquals("[1, 2, 5]", list.toString());
-    }
+        @Test
+        void removesSecondElement() {
+            fill(1, 2, 3, 4);
+            assertEquals(2, list.remove(1));
+            assertEquals("[1, 3, 4]", list.toString());
+        }
 
-    @Test
-    void removeInvalidIndexThrows() {
-        fill(1, 2, 3);
-        assertThrows(IllegalArgumentException.class, () -> list.remove(-1));
-        assertThrows(IllegalArgumentException.class, () -> list.remove(3));
-        assertEquals(3, list.size());
-    }
+        @Test
+        void removesFirstIndex() {
+            fill(1, 2, 3);
+            assertEquals(1, list.remove(0));
+            assertEquals("[2, 3]", list.toString());
+            assertEquals(2, list.getFirst());
+        }
 
-    @Test
-    void removeOnEmptyListThrows() {
-        assertThrows(IllegalArgumentException.class, () -> list.remove(0));
+        @Test
+        void removesLastIndexAndUpdatesTail() {
+            fill(1, 2, 3);
+            assertEquals(3, list.remove(2));
+            assertEquals(2, list.getLast());
+            list.addLast(5);
+            assertEquals("[1, 2, 5]", list.toString());
+        }
+
+        @Test
+        void removesOnlyElement() {
+            fill(1);
+            assertEquals(1, list.remove(0));
+            assertEquals(0, list.size());
+            assertEquals("[empty list]", list.toString());
+        }
+
+        @Test
+        void invalidIndexReturnsNullAndListUnchanged() {
+            fill(1, 2, 3);
+            assertNull(list.remove(-1));
+            assertNull(list.remove(3));
+            assertEquals(3, list.size());
+            assertEquals("[1, 2, 3]", list.toString());
+        }
     }
 
     // ---------- toArray ----------
 
-    @Test
-    void toArrayContainsAllElementsInOrder() {
-        fill(1, 2, 3);
-        assertArrayEquals(new Object[]{1, 2, 3}, list.toArray());
+    @Nested
+    class ToArray {
+
+        @Test
+        void containsAllElementsInOrder() {
+            fill(1, 2, 3);
+            assertArrayEquals(new Object[]{1, 2, 3}, list.toArray());
+        }
+
+        @Test
+        void lengthMatchesSize() {
+            fill(5, 6, 7, 8);
+            assertEquals(list.size(), list.toArray().length);
+        }
+
+        @Test
+        void reflectsRemovals() {
+            fill(1, 2, 3);
+            list.removeFirst();
+            assertArrayEquals(new Object[]{2, 3}, list.toArray());
+        }
     }
 
     // ---------- toString ----------
 
-    @Test
-    void toStringFormat() {
-        fill(25, 43, 48, 60);
-        assertEquals("[25, 43, 48, 60]", list.toString());
+    @Nested
+    class ToString {
+
+        @Test
+        void format() {
+            fill(25, 43, 48, 60);
+            assertEquals("[25, 43, 48, 60]", list.toString());
+        }
+
+        @Test
+        void singleElementHasNoComma() {
+            fill(1);
+            assertEquals("[1]", list.toString());
+        }
+
+        @Test
+        void emptyAfterRemovingAll() {
+            fill(1, 2);
+            list.removeFirst();
+            list.removeFirst();
+            assertEquals("[empty list]", list.toString());
+        }
     }
 
-    @Test
-    void toStringWithStrings() {
-        // die Liste muss mit jedem Comparable-Typ funktionieren
-        MyLinkedList<String> strings = new MyLinkedList<>();
-        strings.addSorted("c");
-        strings.addSorted("a");
-        strings.addSorted("b");
-        assertEquals("[a, b, c]", strings.toString());
+    // ---------- other types ----------
+
+    @Nested
+    class WithStrings {
+
+        @Test
+        void addSortedAndSort() {
+            MyLinkedList<String> strings = new MyLinkedList<>();
+            strings.addSorted("c");
+            strings.addSorted("a");
+            strings.addSorted("b");
+            assertEquals("[a, b, c]", strings.toString());
+
+            strings.sortDES();
+            assertEquals("[c, b, a]", strings.toString());
+            assertTrue(strings.contains("b"));
+        }
     }
 }
