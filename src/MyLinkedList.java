@@ -1,7 +1,13 @@
 public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
-    private int size = 0;
+    private int size;
     private MyListNode<T> head;
     private MyListNode<T> tail;
+
+    public MyLinkedList() {
+        this.size = 0;
+        this.head = null;
+        this.tail = null;
+    }
 
     ///Returns number of elements in the List (in O(1))
     @Override
@@ -32,7 +38,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
             throw new IllegalArgumentException("adding element failed, no data available");
         }
         if (head == null) {
-            addFirst(elem);     // methodcall
+            addFirst(elem);     // empty list: same as addFirst
             return;
         }
         MyListNode<T> add = new MyListNode<>(elem);
@@ -44,11 +50,12 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
     ///Adds the element to the list (sorted in asc order)
     @Override
     public void addSorted(T val) throws IllegalArgumentException {
-        // assumes list is already sorted ascending - otherwise insert position is undefined
-        // add sorted ASCENDING
-
         if (val == null) {
             throw new IllegalArgumentException("adding element failed, no data available");
+        }
+
+        if (!isSortedASC()) {         // list unsorted
+            sortASC();
         }
 
         if (head == null || val.compareTo(head.getElement()) <= 0) {        // add as first element
@@ -66,7 +73,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
             curr = curr.getNext();
         }
 
-        MyListNode<T> add = new MyListNode<T>(val);
+        MyListNode<T> add = new MyListNode<>(val);
         add.setNext(curr.getNext());
         curr.setNext(add);
         size++;
@@ -75,55 +82,31 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
     ///Sorts the list in ascending order
     @Override
     public void sortASC() {
-        if (head == null) {
-            throw new IllegalArgumentException("empty list");
+        if (head == null || size == 1) {
+            return;
         }
+        head = mergeSort(head, size, true);   // ascending
 
-        boolean swapped;
-        do {
-            swapped = false;
-            MyListNode<T> curr = head;
-
-            while (curr.getNext() != null) {
-                MyListNode<T> next = curr.getNext();
-
-                // compare every single pair of elements
-                if (curr.getElement().compareTo(next.getElement()) > 0) {
-                    T tmp = curr.getElement();              // safe elem to swap
-                    curr.setElement(next.getElement());
-                    next.setElement(tmp);
-                    swapped = true;
-                }
-                curr = next;
-            }
-        } while (swapped);
-
+        MyListNode<T> curr = head;            // set tail
+        while (curr.getNext() != null) {
+            curr = curr.getNext();
+        }
+        tail = curr;
     }
 
     ///Sorts the list in descending order
     @Override
     public void sortDES() {
-        if (head == null) {
-            throw new IllegalArgumentException("empty list");
+        if (head == null || size == 1) {
+            return;
         }
+        head = mergeSort(head, size, false);  // descending
 
-        boolean swapped;
-        do {
-            swapped = false;
-            MyListNode<T> curr = head;
-
-            while (curr.getNext() != null) {
-                MyListNode<T> next = curr.getNext();
-
-                if (curr.getElement().compareTo(next.getElement()) < 0) {
-                    T tmp = curr.getElement();
-                    curr.setElement(next.getElement());
-                    next.setElement(tmp);
-                    swapped = true;
-                }
-                curr = next;
-            }
-        } while (swapped);
+        MyListNode<T> curr = head;            // set tail
+        while (curr.getNext() != null) {
+            curr = curr.getNext();
+        }
+        tail = curr;
     }
 
     ///Clears the list by removing all elements (in O(1))
@@ -242,6 +225,7 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
             return null;
         }
 
+        // first or last element to remove
         if (index == 0) {
             return removeFirst();
         }
@@ -249,12 +233,13 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
             return removeLast();
         }
 
+        // search for element
         MyListNode<T> prev = head;
         for (int i = 0; i != index - 1; i++) {
             prev = prev.getNext();
         }
 
-        MyListNode<T> delete = prev.getNext();
+        MyListNode<T> delete = prev.getNext();      // safe element for return statement
         prev.setNext(delete.getNext());
         size--;
         return delete.getElement();
@@ -293,5 +278,75 @@ public class MyLinkedList <T extends Comparable<T>> implements MyList<T> {
             i++;
         }
         return arr;
+    }
+
+    // helper ASCENDING/DESCENDING
+
+    ///Recursive merge sort: splits the list, sorts both halves, merges them
+    private MyListNode<T> mergeSort(MyListNode<T> start, int length, boolean asc) {
+        if (length <= 1) return start;      // list is sorted already
+
+        int half = length / 2;
+
+        // walk to last node of left half
+        MyListNode<T> beforeMid = start;
+        for (int i = 0; i < half - 1; i++) {
+            beforeMid = beforeMid.getNext();
+        }
+
+        MyListNode<T> mid = beforeMid.getNext(); // start right half of list
+        beforeMid.setNext(null);                 // split list in two halfes
+
+        MyListNode<T> left = mergeSort(start, half, asc);
+        MyListNode<T> right = mergeSort(mid, length - half, asc);
+
+        return merge(left, right, asc);
+    }
+
+    ///Merges two sorted sublists into one sorted list
+    private MyListNode<T> merge(MyListNode<T> left, MyListNode<T> right, boolean asc) {
+        if (left == null) return right;
+        if (right == null) return left;
+
+        // set head of merged list
+        int cmp = left.getElement().compareTo(right.getElement());
+        MyListNode<T> newHead;
+        if (asc ? cmp <= 0 : cmp >= 0) {
+            newHead = left;
+            left = left.getNext();
+        } else {
+            newHead = right;
+            right = right.getNext();
+        }
+
+        // append remaining nodes (alternate)
+        MyListNode<T> curr = newHead;
+        while (left != null && right != null) {
+            cmp = left.getElement().compareTo(right.getElement());
+            if (asc ? cmp <= 0 : cmp >= 0) {
+                curr.setNext(left);
+                left = left.getNext();
+            } else {
+                curr.setNext(right);
+                right = right.getNext();
+            }
+            curr = curr.getNext();
+        }
+
+        // add rest
+        curr.setNext(left != null ? left : right);
+        return newHead;
+    }
+
+    // helper - check if list is sorted ascending
+    private boolean isSortedASC() {
+        MyListNode<T> curr = head;
+        while (curr != null && curr.getNext() != null) {
+            if (curr.getElement().compareTo(curr.getNext().getElement()) > 0) {
+                return false;               // element bigger than successor - list is not sorted
+            }
+            curr = curr.getNext();
+        }
+        return true;                        // empty list or one element - list is sorted
     }
 }
